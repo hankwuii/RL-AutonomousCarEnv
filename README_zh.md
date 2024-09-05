@@ -68,6 +68,11 @@
 
 ---
 
+## 安裝過程遇到問題!!!
+* 參考[英文版README.md](README.md)
+
+---
+
 ## Project structure
 ![img.png](docs/ProjectStructure01.png)
 ![img_1.png](docs/ProjectStructure02.png)

@@ -77,6 +77,26 @@
 
 ---
 
+## Troubleshooting
+### error: Microsoft Visual C++ 14.0 or greater is required.
+1. Download and install Visual Studio 2022 Installer ([here](https://visualstudio.microsoft.com/zh-hant/visual-cpp-build-tools/))
+2. Install c++ package, As shown below
+![img.png](docs/VisualStudioInstall.png)
+
+3. Delete the racing environment and re-install again
+   ```
+    # uninstall env
+    conda deactivate
+    conda env remove -n racing
+    # re-install env
+    conda env create -f environment.yml
+    conda activate racing
+    pip install -e .
+    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   ```
+
+---
+
 ## Project structure
 ![img.png](docs/ProjectStructure01.png)
 ![img_1.png](docs/ProjectStructure02.png)
@@ -220,25 +240,6 @@ Currently available maps are listed below. The gridmaps are originally from the 
 | ![circle](docs/tracks/circle.png)     | Circle   |
 | ![plechaty](docs/tracks/plechaty.png) | Plechaty |
 
----
-
-## Troubleshooting
-### error: Microsoft Visual C++ 14.0 or greater is required.
-1. Download and install Visual Studio 2022 Installer ([here](https://visualstudio.microsoft.com/zh-hant/visual-cpp-build-tools/))
-2. Install c++ package, As shown below
-![img.png](docs/VisualStudioInstall.png)
-
-3. Delete the racing environment and re-install again
-   ```
-    # uninstall env
-    conda deactivate
-    conda env remove -n racing
-    # re-install env
-    conda env create -f environment.yml
-    conda activate racing
-    pip install -e .
-    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
-   ```
 
 ## Acknowledgments
 * This project is modified from [axelbr/racecar_gym](https://github.com/axelbr/racecar_gym.git)
