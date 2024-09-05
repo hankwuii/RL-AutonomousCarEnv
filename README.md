@@ -1,33 +1,56 @@
 # Racecar Gym
 
-![berlin track](docs/racecar_gym.gif)
+* Competition PPT link : [https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing](https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing)
 
-A gym environment for a miniature, [F1Tenth](https://f1tenth.org/)-like racecar using the bullet physics engine with pybullet.
+
+## Competition Rules
+* Please use Pytorch to finish the competition.
+* During the mid-term competition, only the environment provided by this document will be used, so please be careful not to include other third-party libraries in the submitted code.
+* The mid-term competition will be held in two rounds. 10 players from the 1st round will advance to the 2nd round. In the end, only one player can win the championship.
+* We will use the sensors and settings described in `scenarios/validation.yml`
+
+## How to deliver your code and RL agent ?
+* Put the weight and code of all models under the `agent` folder
+* Compress the `agent` folder into a `zip file` and upload it to moodle
+  > the submission location will be provided in the future
+
+## How to verify your code and RL agent can be used ?
+* Download the project again 
+    > hereinafter referred to as a `new project`
+* Follow the instructions below to re-create a new virtual environment 
+    > this step ensures that your code can be executed in the standard environment provided by this project
+* Place your `agent` folder into the new project
+* Execute `python validation_script.py`
+* If it can be executed normally, it means that your submission documents are fine.
+
+## What should I do if I encounter an environment installation error?
+* See section **Troubleshooting** as below
+
+---
+
+[//]: # (![berlin track]&#40;docs/racecar_gym.gif&#41;)
+
 ## Installation
 
-> **Warning**
-> We now migrated to *gymnasium*. If you need to use the old gym api, you can either use some of the [compatibility wrappers](https://gymnasium.farama.org/content/gym_compatibility/) of gymnasium
-> or you can use older versions of this gym. The last version supporting the old gym api is tagged as **gym-api**:
->
->`git checkout gym-api; pip install -e .`
+> The following steps only verify on windows10
+1. Install [Anaconda](https://www.anaconda.com/download/success)
+2. Execute the following command under the project folder
+    ```shell
+    # For windows
+    conda env create -f environment.yml
+    conda activate racing
+    pip install -e .
+    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+    ```
+3. For testing the environment, Execute the following command
+    ```shell
+    conda activate racing
+    python validation_script.py
+    ```
 
-You can install ``racecar_gym`` with the following commands:
-
-```shell_script
-git clone https://github.com/axelbr/racecar_gym.git
-cd racecar_gym
-pip install -e .
-```
-
-On the first use of this gym, the tracks are downloaded automatically.
-
-Of course, you can download them manually too. Here is how you can do this from the command line:
-```shell_script
-cd ./models/scenes
-VERSION=v1.0.0
-wget https://github.com/axelbr/racecar_gym/releases/download/tracks-${VERSION}/all.zip
-unzip all.zip
-```
+## How to control the car and training a RL agent ?
+* Modify the Agent.get_action function in the agent/Agent.py script.
+* Implement your RL algorithm within the Agent.get_action function to control the car.
 
 ## Environments
 
@@ -71,13 +94,13 @@ The observation space is a dictionary where the names of the sensors are the key
 which map to the actual measurements. Currently, five sensors are implemented:
 pose, velocity, acceleration, LiDAR and RGB Camera. Further, the observation space also includes the current simulation time.
 
-|Key|Space|Defaults|Description|
-|---|---|---|---|
-|pose|`Box(6,)`| |Holds the position (`x`, `y`, `z`) and the orientation (`roll`, `pitch`, `yaw`) in that order.|
-|velocity|`Box(6,)`| |Holds the `x`, `y` and `z` components of the translational and rotational velocity.|
-|acceleration|`Box(6,)`| |Holds the `x`, `y` and `z` components of the translational and rotational acceleration.|
-|lidar|`Box(<scans>,)`|`scans: 1080`|Lidar range scans.|
-|rgb_camera|`Box(<height>, <width>, 3)`|`height: 240, width: 320`|RGB image of the front camera.|
+| Key          | Space                       | Defaults                  | Description                                                                                    |
+|--------------|-----------------------------|---------------------------|------------------------------------------------------------------------------------------------|
+| pose         | `Box(6,)`                   |                           | Holds the position (`x`, `y`, `z`) and the orientation (`roll`, `pitch`, `yaw`) in that order. |
+| velocity     | `Box(6,)`                   |                           | Holds the `x`, `y` and `z` components of the translational and rotational velocity.            |
+| acceleration | `Box(6,)`                   |                           | Holds the `x`, `y` and `z` components of the translational and rotational acceleration.        |
+| lidar        | `Box(<scans>,)`             | `scans: 1080`             | Lidar range scans.                                                                             |
+| rgb_camera   | `Box(<height>, <width>, 3)` | `height: 240, width: 320` | RGB image of the front camera.                                                                 |
 
 ### Actions
 The action space for a single agent is a defined by the actuators of the vehicle. 
@@ -90,31 +113,31 @@ In this case, the action space is a dictionary with keys `speed` and `steering`.
 Note, that the action space of the car is normalized between -1 and 1.
 The action space can include the following actuators:
 
-| Key      |Space| Description                                                                 |
-|----------|---|-----------------------------------------------------------------------------|
-| motor    |`Box(low=-1, high=1, shape=(1,))`| Throttle command. If negative, the car accelerates backwards.               |
-| speed    |`Box(low=-1, high=1, shape=(1,))`| Normalized target speed. |
-| steering |`Box(low=-1, high=1, shape=(1,))`| Normalized steering angle.                                                  |
+| Key      | Space                             | Description                                                   |
+|----------|-----------------------------------|---------------------------------------------------------------|
+| motor    | `Box(low=-1, high=1, shape=(1,))` | Throttle command. If negative, the car accelerates backwards. |
+| speed    | `Box(low=-1, high=1, shape=(1,))` | Normalized target speed.                                      |
+| steering | `Box(low=-1, high=1, shape=(1,))` | Normalized steering angle.                                    |
 
 ### State
 In addition to observations obtained by sensors, the environment passes back the true state of each vehicle in each
 step (the state is returned as the *info* dictionary). The state is a dictionary, where the keys are the ids of all agents.
 Currently, the state looks like this:
 
-|Key|Type|Description|
-|---|---|---|
-|wall_collision|`bool`|True if the vehicle collided with the wall.|
-|opponent_collisions|`List[str]`|List of opponent id's which are involved in a collision with the agent.|
-|pose|`NDArray[6]`|Ground truth pose of the vehicle (x, y, z, roll, pitch, yaw).|
-|acceleration|`NDArray[6]`|Ground truth acceleration of the vehicle (x, y, z, roll, pitch, yaw).|
-|velocity|`NDArray[6]`|Ground truth velocity of the vehicle (x, y, z, roll, pitch, yaw).|
-|progress|`float`|Current progress in this lap. Interval: [0, 1]|
-|time|`float`|Simulation time.|
-|checkpoint|`int`|Tracks are subdivided into checkpoints to make sure agents are racing in clockwise direction. Starts at 0.|
-|lap|`int`|Current lap.|
-|rank|`int`|Current rank of the agent, based on lap and progress.|
-|wrong_way|`bool`|Indicates wether the agent goes in the right or wrong direction.|
-|observations|`Dict`|The most recent observations of the agent.
+| Key                 | Type         | Description                                                                                                |
+|---------------------|--------------|------------------------------------------------------------------------------------------------------------|
+| wall_collision      | `bool`       | True if the vehicle collided with the wall.                                                                |
+| opponent_collisions | `List[str]`  | List of opponent id's which are involved in a collision with the agent.                                    |
+| pose                | `NDArray[6]` | Ground truth pose of the vehicle (x, y, z, roll, pitch, yaw).                                              |
+| acceleration        | `NDArray[6]` | Ground truth acceleration of the vehicle (x, y, z, roll, pitch, yaw).                                      |
+| velocity            | `NDArray[6]` | Ground truth velocity of the vehicle (x, y, z, roll, pitch, yaw).                                          |
+| progress            | `float`      | Current progress in this lap. Interval: [0, 1]                                                             |
+| time                | `float`      | Simulation time.                                                                                           |
+| checkpoint          | `int`        | Tracks are subdivided into checkpoints to make sure agents are racing in clockwise direction. Starts at 0. |
+| lap                 | `int`        | Current lap.                                                                                               |
+| rank                | `int`        | Current rank of the agent, based on lap and progress.                                                      |
+| wrong_way           | `bool`       | Indicates wether the agent goes in the right or wrong direction.                                           |
+| observations        | `Dict`       | The most recent observations of the agent.                                                                 |
 
 ## Available API's
 
@@ -152,25 +175,6 @@ while not done:
 
 env.close()
 ```
-The predefined env-strings are of the form
-```
-<Multi|Single>Agent<track>-v0
-e.g.: MultiAgentAustria-v0
-```
-
-For further documentation on available gym environments, please refer to the [Gym Documentation](./docs/gym.md) (under construction)
-and the examples shown in [examples/gym_examples/](./examples/gym_examples).
-
-### PettingZoo API
-For multi-agent races, we also implement the [PettingZoo API](https://www.pettingzoo.ml/). To create a PettingZoo environment,
-you can use the `pettingzoo_api` module:
-```python
-from racecar_gym.envs import pettingzoo_api
-env = pettingzoo_api.env(scenario='path/to/scenario')
-```
-For further documentation on available PettingZoo environments, please refer to the [PettingZoo Documentation](./docs/pettingzoo.md) (under construction)
-and the examples shown in [examples/pettingzoo_examples/](./examples/pettingzoo_examples).
-
 
 ## Maps
 
@@ -183,9 +187,27 @@ Currently available maps are listed below. The gridmaps are originally from the 
 | ![montreal](docs/tracks/montreal.png) | Montreal |
 | ![torino](docs/tracks/torino.png)     | Torino   |
 | ![circle](docs/tracks/circle.png)     | Circle   |
-| ![plechaty](docs/tracks/plechaty.png)   | Plechaty |
+| ![plechaty](docs/tracks/plechaty.png) | Plechaty |
 
+---
 
+## Troubleshooting
+### error: Microsoft Visual C++ 14.0 or greater is required.
+1. Download and install Visual Studio 2022 Installer ([here](https://visualstudio.microsoft.com/zh-hant/visual-cpp-build-tools/))
+2. Install c++ package, As shown below
+![img.png](docs/VisualStudioInstall.png)
 
-## Notes
-Please note that this is work in progress, and interfaces might change. Also more detailed documentation and additional scenarios will follow.
+3. Delete the racing environment and re-install again
+   ```
+    # uninstall env
+    conda deactivate
+    conda env remove -n racing
+    # re-install env
+    conda env create -f environment.yml
+    conda activate racing
+    pip install -e .
+    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   ```
+
+## Acknowledgments
+* This project is modified from [axelbr/racecar_gym](https://github.com/axelbr/racecar_gym.git)
