@@ -50,13 +50,16 @@
 > 以下步驟僅在 Windows 10 上驗證過
 1. 安裝 [Anaconda](https://www.anaconda.com/download/success)
 2. 在項目資料夾中執行以下命令：
-```shell
-# 適用於 Windows
-conda env create -f environment.yml
-conda activate racing
-pip install -e .
-pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
-```
+    ```shell
+    # For windows
+    conda env create -f environment.yml
+    conda activate racing
+    pip install -e .
+    #  If you have a GPU
+    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+    # If you don't have a GPU
+    # pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+    ```
 3. 為了測試環境，請執行以下命令
     ```shell
     conda activate racing
