@@ -1,7 +1,8 @@
 # Racecar Gym
 
 * Competition PPT link : [https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing](https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing)
-
+* Here is the chinese version : [README_zh.md](README_zh.md)
+> The content of the Chinese version has not been verified. Please refer to the English version for important information.
 
 ## Competition Rules
 * Please use Pytorch to finish the competition.
@@ -23,6 +24,19 @@
 * Execute `python validation_script.py`
 * If it can be executed normally, it means that your submission documents are fine.
 
+## How to control the car and training a RL agent ?
+
+> !!!!!!!!! NOTE THAT !!!!!!!!!  
+> The scenarios: `validation.yml` and `validation2.yml` couldn't use for training  
+> If they are used for training, unknown errors may result  
+> These two senarios are only used to verify the algorithm  
+> 如果使用他們來進行訓練，可能會導致未知錯誤  
+> 這兩個senarios僅用來驗證算法用  
+
+* Modify the Agent.get_action function in the agent/Agent.py script.
+* Implement your RL algorithm within the Agent.get_action function to control the car.
+
+
 ## What should I do if I encounter an environment installation error?
 * See section **Troubleshooting** as below
 
@@ -40,17 +54,16 @@
     conda env create -f environment.yml
     conda activate racing
     pip install -e .
+    #  If you have a GPU
     pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+    # If you don't have a GPU
+    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
     ```
 3. For testing the environment, Execute the following command
     ```shell
     conda activate racing
     python validation_script.py
     ```
-
-## How to control the car and training a RL agent ?
-* Modify the Agent.get_action function in the agent/Agent.py script.
-* Implement your RL algorithm within the Agent.get_action function to control the car.
 
 ## Environments
 
