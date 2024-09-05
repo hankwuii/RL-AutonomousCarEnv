@@ -18,9 +18,19 @@
 ## How to verify your code and RL agent can be used ?
 * Download the project again 
     > hereinafter referred to as a `new project`
-* Follow the instructions below to re-create a new virtual environment 
+* Follow the following command to re-establish a new virtual environment
     > this step ensures that your code can be executed in the standard environment provided by this project
-* Place your `agent` folder into the new project
+    ``` shell
+    # uninstall env
+    conda deactivate
+    conda env remove -n racing
+    # re-install env
+    conda env create -f environment.yml
+    conda activate racing
+    pip install -e .
+    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   ```
+* Place your `agent` folder into the `new project`
 * Execute `python validation_script.py`
 * If it can be executed normally, it means that your submission documents are fine.
 
@@ -64,6 +74,8 @@
     conda activate racing
     python validation_script.py
     ```
+
+---
 
 ## Environments
 
