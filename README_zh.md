@@ -65,6 +65,12 @@ pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https
 
 ---
 
+## Project structure
+![img.png](docs/ProjectStructure01.png)
+![img_1.png](docs/ProjectStructure02.png)
+
+---
+
 ## Troubleshooting
 ### error: Microsoft Visual C++ 14.0 or greater is required.
 1. Download and install Visual Studio 2022 Installer ([here](https://visualstudio.microsoft.com/zh-hant/visual-cpp-build-tools/))

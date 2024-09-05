@@ -77,6 +77,12 @@
 
 ---
 
+## Project structure
+![img.png](docs/ProjectStructure01.png)
+![img_1.png](docs/ProjectStructure02.png)
+
+---
+
 ## Environments
 
 The observation and action space is a `Dict` holding the agents and their id's. The observation and action space for a single agent 
