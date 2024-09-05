@@ -1,8 +1,15 @@
 from time import sleep
+import sys
+
 import gymnasium
-import racecar_gym.envs.gym_api
 from matplotlib import pyplot as plt
-# import cv2
+
+import racecar_gym.envs.gym_api  # Necessary!!!Cannot be deleted!!!
+from agent.Agent import Agent
+
+
+if 'racecar_gym.envs.gym_api' not in sys.modules:
+    raise RuntimeError('Please run: pip install -e . and import racecar_gym.envs.gym_api first!')
 
 
 def main():
@@ -13,20 +20,24 @@ def main():
     env = gymnasium.make(
         'SingleAgentAustria-v0',
         render_mode=render_mode,
-        scenario='scenarios/validation.yml',  # change the scenario here (change map)
+        scenario='scenarios/austria.yml',  # change the scenario here (change map)
+        # scenario='scenarios/validation.yml',  # change the scenario here (change map), ONLY USE THIS FOR VALIDATION
+        # scenario='scenarios/validation2.yml',   # Use this during the midterm competition, ONLY USE THIS FOR VALIDATION
     )
     done = False
+    agent = Agent()
 
     # ======================================================================
     # Run the environment
     # ======================================================================
-    obs = env.reset(options=dict(mode='grid'))
+    obs, info = env.reset(options=dict(mode='grid'))
     t = 0
     while not done:
         # ==================================
         # Execute RL model to obtain action
         # ==================================
-        action = env.action_space.sample()
+        # action = env.action_space.sample()
+        action = agent.get_action(obs)
         obs, rewards, done, truncated, states = env.step(action)
 
         if t % 30 == 0 and "rgb" in render_mode:
@@ -35,8 +46,6 @@ def main():
             # ==================================
 
             image = env.render()
-            # cv2.imshow("image", image)
-            # cv2.waitKey()
             plt.clf()
             plt.title("Pose")
             plt.imshow(image)
