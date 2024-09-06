@@ -48,7 +48,8 @@
 
 
 ## What should I do if I encounter an environment installation error?
-* See section **Troubleshooting** as below
+* See section **FAQ** as below
+* [Github Issue](https://github.com/Bacon9629/racecar_gym/issues)
 
 ---
 
@@ -77,7 +78,7 @@
 
 ---
 
-## Troubleshooting
+## FAQ
 ### error: Microsoft Visual C++ 14.0 or greater is required.
 1. Download and install Visual Studio 2022 Installer ([here](https://visualstudio.microsoft.com/zh-hant/visual-cpp-build-tools/))
 2. Install c++ package, As shown below

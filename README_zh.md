@@ -41,7 +41,7 @@
 * 在 `Agent.get_action` 函數內實現你的 RL 算法來控制賽車。
 
 ## 如果遇到環境安裝錯誤應該怎麼辦？
-* 請參閱下方的**問題排除**部分。
+* 請參閱下方的**FAQ**部分。
 
 ---
 
@@ -79,7 +79,7 @@
 
 ---
 
-## Troubleshooting
+## FAQ
 ### error: Microsoft Visual C++ 14.0 or greater is required.
 1. Download and install Visual Studio 2022 Installer ([here](https://visualstudio.microsoft.com/zh-hant/visual-cpp-build-tools/))
 2. Install c++ package, As shown below
