@@ -1,103 +1,101 @@
+# Racecar Gym
 
-# 赛道车虚拟环境
+* 競賽簡報連結：[https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing](https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing)
+> **注意：** 中文版內容尚未驗證，請參考英文版以獲取重要資訊。
 
-* 比赛PPT链接: [https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing](https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing)
-* 中文版本內容未經驗證，重要資訊請參考英文版本
+## 競賽規則
+* 請使用 Pytorch 完成比賽。
+* 期中競賽僅使用本文件提供的環境，請勿在提交的代碼中包含其他第三方庫。
+* 期中競賽分為兩輪，第一輪的前 10 名將進入第二輪。最後僅有一位參賽者能獲得冠軍。
+* 我們將使用 scenarios/validation.yml 中描述的傳感器和設置進行競賽。
 
-## 比赛规则
-* 请使用Pytorch完成比赛。
-* 在期中比赛中，只会使用本文档提供的环境，请注意不要在提交的代码中包含其他第三方库。
-* 期中比赛分两轮进行。第一轮将有10名选手晋级到第二轮。最终，只有一位选手能赢得冠军。
-* 我们将使用 `scenarios/validation.yml` 中描述的传感器和设置。
+## 如何提交你的代碼和強化學習 (RL) 智能體？
+* 將所有模型的權重和代碼放入 agent 資料夾中。
+* 將 agent 資料夾壓縮成 zip 文件，並上傳到 Moodle。
+  > 提交位置將在未來提供。
 
-## 如何提交你的代码和强化学习（RL）代理？
-* 将所有模型的权重和代码放在 `agent` 文件夹中。
-* 将 `agent` 文件夹压缩为 `zip 文件` 并上传到 moodle。
-  > 提交位置将在未来提供。
+## 如何驗證你的代碼和智能體是否可以正常運行？
+* 重新下載項目
+    > 以下簡稱為`新項目`
+* 按照下方指令重新創建新的虛擬環境
+    > 此步驟確保你的代碼能在本項目提供的標準環境中執行
+    ``` shell
+    # uninstall env
+    conda deactivate
+    conda env remove -n racing
+    # re-install env
+    conda env create -f environment.yml
+    conda activate racing
+    pip install -e .
+    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   ```
+* 將你的 agent 資料夾放入`新項目`中
+* 執行 `python validation_script.py`
+* 如果能正常執行，則表示你的提交文件無誤。
 
-## 如何验证你的代码和RL代理可以使用？
-* 重新下载项目
-    > 下文称之为 `新项目`
-* 按照下面的说明重新创建一个新的虚拟环境
-    > 此步骤确保您的代码可以在本项目提供的标准环境中执行
-* 将您的 `agent` 文件夹放入新项目中
-* 执行 `python validation_script.py`
-* 如果可以正常执行，说明您的提交文件没有问题。
+## 如何控制賽車並訓練 RL 智能體？
+> **重要注意事項！**
+> *validation.yml* 和 *validation2.yml* 場景僅用於算法驗證，請勿用於訓練。使用這些場景進行訓練可能會導致未知錯誤。  
+> 這兩個場景僅用來驗證算法。
+* 修改 `agent/Agent.py` 腳本中的 `Agent.get_action` 函數。
+* 在 `Agent.get_action` 函數內實現你的 RL 算法來控制賽車。
 
-## 如何控制汽车并训练RL代理？
-> !!!!!!!!! 请注意 !!!!!!!!  
-> 场景: `validation.yml` 和 `validation2.yml` 不可用于训练  
-> 如果使用它们进行训练，可能会导致未知错误  
-> 这两个场景仅用于验证算法  
-* 修改 `agent/Agent.py` 脚本中的 `Agent.get_action` 函数。
-* 在 `Agent.get_action` 函数中实现你的RL算法以控制汽车。
-
-## 如果无法在环境中运行该怎么办？
-* 确保你的系统安装了合适的依赖项，特别是 Python 和必要的库。
-* 查看系统日志，查找可能的错误提示，并尝试解决。
-
-## 如何使用虚拟环境？
-```python
-import gymnasium as gym
-
-# 使用默认场景:
-env = gym.make(
-    'RacecarScenario-v0',
-    render_mode='human'
-)
-
-# 自定义场景:
-env = gym.make(
-    id='SingleAgentRaceEnv-v0',
-    scenario='path/to/scenario',
-    render_mode='rgb_array_follow',  # 可选
-    render_options=dict(width=320, height=240, agent='A')  # 可选
-)
-
-done = False
-reset_options = dict(mode='grid')
-obs, info = env.reset(options=reset_options)
-
-while not done:
-    action = env.action_space.sample()
-    obs, rewards, terminated, truncated, states = env.step(action)
-    done = terminated or truncated
-
-env.close()
-```
-
-## 地图
-
-当前可用的地图如下所列。这些网格地图原始来自 [F1Tenth](https://github.com/f1tenth) 仓库。
-
-| 图片                                 | 名称     |
-|--------------------------------------|----------|
-| ![austria](docs/tracks/austria.png)  | 奥地利   |
-| ![berlin](docs/tracks/berlin.png)    | 柏林     |
-| ![montreal](docs/tracks/montreal.png)| 蒙特利尔 |
-| ![torino](docs/tracks/torino.png)    | 都灵     |
-| ![circle](docs/tracks/circle.png)    | 圆形赛道 |
-| ![plechaty](docs/tracks/plechaty.png)| Plechaty |
+## 如果遇到環境安裝錯誤應該怎麼辦？
+* 請參閱下方的**FAQ**部分。
 
 ---
 
-## 故障排除
-### 错误: Microsoft Visual C++ 14.0 或更高版本是必需的
-1. 下载并安装 Visual Studio 2022 Installer ([这里](https://visualstudio.microsoft.com/zh-hant/visual-cpp-build-tools/))
-2. 安装C++包， 如下所示
+## 安裝
+
+> 以下步驟僅在 Windows 10 上驗證過
+1. 安裝 [Anaconda](https://www.anaconda.com/download/success)
+2. 在項目資料夾中執行以下命令：
+    ```shell
+    # For windows
+    conda env create -f environment.yml
+    conda activate racing
+    pip install -e .
+    #  If you have a GPU
+    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+    # If you don't have a GPU
+    # pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+    ```
+3. 為了測試環境，請執行以下命令
+    ```shell
+    conda activate racing
+    python validation_script.py
+    ```
+
+---
+
+## 安裝過程遇到問題!!!
+* 參考[英文版README.md](README.md)
+
+---
+
+## Project structure
+![img.png](docs/ProjectStructure01.png)
+![img_1.png](docs/ProjectStructure02.png)
+
+---
+
+## FAQ
+### error: Microsoft Visual C++ 14.0 or greater is required.
+1. Download and install Visual Studio 2022 Installer ([here](https://visualstudio.microsoft.com/zh-hant/visual-cpp-build-tools/))
+2. Install c++ package, As shown below
 ![img.png](docs/VisualStudioInstall.png)
 
-3. 删除 racing 环境并重新安装
-   ```bash
-    # 卸载环境
+3. Delete the racing environment and re-install again
+   ```
+    # uninstall env
     conda deactivate
     conda env remove -n racing
-    # 重新安装环境
+    # re-install env
     conda env create -f environment.yml
     conda activate racing
     pip install -e .
     pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
    ```
 
-## 致谢
-* 本项目修改自 [axelbr/racecar_gym](https://github.com/axelbr/racecar_gym.git)
+## Acknowledgments
+* This project is modified from [axelbr/racecar_gym](https://github.com/axelbr/racecar_gym.git)
