@@ -1,19 +1,35 @@
-class Agent():
-    def __init__(self):
-        pass
+from agent.DQN.dqn_agent import DQNAgent
 
-    def get_action(self, obs: dict) -> dict:
-        """
 
-        Args:
-            obs: dict
-                `{'rgb_image': ndarray(128, 128, 3), 'lidar': ndarray(1080,), 'pose': ndarray(6,), 'velocity': ndarray(6,), 'acceleration': ndarray(6,), time: ndarray(1,}`
+def get_training_agent():
+    agent = DQNAgent(
+        state_dim=1080,
+        lr=3e-4,
+        gamma=0.9,
+        epsilon=1.0,
+        epsilon_decay=0.995,
+        epsilon_min=0.01,
+        memory_size=30000,
+        batch_size=32,
+        target_update=50,
+        is_training=True
+    )
 
-        Returns: dict
-            `{'motor': float,"steering": float}`
+    return agent
 
-        """
 
-        # TODO Your algorithm here
+def get_valid_agent():
+    agent = DQNAgent(
+        state_dim=1080,
+        lr=3e-4,
+        gamma=0.9,
+        epsilon=1.0,
+        epsilon_decay=0.995,
+        epsilon_min=0.01,
+        memory_size=30000,
+        batch_size=32,
+        target_update=50,
+        is_training=False
+    )
 
-        return {"motor": 1.0, "steering": 0.0}
+    return agent

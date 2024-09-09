@@ -5,7 +5,7 @@ import gymnasium
 from matplotlib import pyplot as plt
 
 import racecar_gym.envs.gym_api  # Necessary!!!Cannot be deleted!!!
-from agent.Agent import Agent
+from agent.Agent import get_valid_agent
 
 
 if 'racecar_gym.envs.gym_api' not in sys.modules:
@@ -16,16 +16,16 @@ def main():
     # ======================================================================
     # Create the environment
     # ======================================================================
-    render_mode = 'rgb_array_follow'  # 'human', 'rgb_array_birds_eye' and 'rgb_array_follow'
+    render_mode = 'human'  # 'human', 'rgb_array_birds_eye' and 'rgb_array_follow'
     env = gymnasium.make(
         'SingleAgentAustria-v0',
         render_mode=render_mode,
-        scenario='scenarios/austria.yml',  # change the scenario here (change map)
+        scenario='scenarios/circle_cw.yml',  # change the scenario here (change map)
         # scenario='scenarios/validation.yml',  # change the scenario here (change map), ONLY USE THIS FOR VALIDATION
         # scenario='scenarios/validation2.yml',   # Use this during the midterm competition, ONLY USE THIS FOR VALIDATION
     )
     done = False
-    agent = Agent()
+    agent = get_valid_agent()
 
     # ======================================================================
     # Run the environment
@@ -36,7 +36,6 @@ def main():
         # ==================================
         # Execute RL model to obtain action
         # ==================================
-        # action = env.action_space.sample()
         action = agent.get_action(obs)
         obs, rewards, done, truncated, states = env.step(action)
 
