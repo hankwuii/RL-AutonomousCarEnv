@@ -28,7 +28,6 @@
     conda env create -f environment.yml
     conda activate racing
     pip install -e .
-    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
    ```
 * Place your `agent` folder into the `new project`
 * Execute `python validation_script.py`
@@ -65,10 +64,6 @@
     conda env create -f environment.yml
     conda activate racing
     pip install -e .
-    #  If you have a GPU
-    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
-    # If you don't have a GPU
-    # pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
     ```
 3. For testing the environment, Execute the following command
     ```shell
@@ -93,7 +88,6 @@
     conda env create -f environment.yml
     conda activate racing
     pip install -e .
-    pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
    ```
 
 ---
