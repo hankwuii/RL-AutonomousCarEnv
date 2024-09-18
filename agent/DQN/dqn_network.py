@@ -22,7 +22,6 @@ class DQNNetwork(nn.Module):
             nn.Linear(512, 256),
             nn.ReLU(),
             nn.Linear(256, action_dim),
-            nn.Tanh()
         )
 
     def forward(self, x):

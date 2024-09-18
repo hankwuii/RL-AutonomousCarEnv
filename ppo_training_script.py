@@ -3,6 +3,7 @@ import sys
 
 import gymnasium
 import numpy as np
+import torch
 from matplotlib import pyplot as plt
 
 import racecar_gym.envs.gym_api  # Necessary!!!Cannot be deleted!!!
@@ -27,7 +28,7 @@ def main():
 
     EPOCHS = 1000
     best_reward = -np.inf
-    agent = get_training_agent()
+    agent = get_training_agent(agent_name='PPO')
 
     # ======================================================================
     # Run the environment
@@ -36,50 +37,60 @@ def main():
         obs, info = env.reset(options=dict(mode='grid'))
         t = 0
         total_reward = 0
-        old_progress = 0
+        episode_len = 0
         done = False
 
         while not done:
             # ==================================
             # Execute RL model to obtain action
             # ==================================
-            action = agent.get_action(obs)
+            action, a_logp, value = agent.get_action(obs)
+
             next_obs, _, done, truncated, states = env.step(action)
 
             # Calculate reward
             reward = 0
             reward += np.linalg.norm(states['velocity'][:3])
 
-            # reward += states['progress'] - old_progress
-            # old_progress = states['progress']
-
             if states['wall_collision']:
                 reward += -5
-                done = True
 
             total_reward += reward
+            agent.store_trajectory(obs, action, value, a_logp, reward, t)
 
-            agent.store_transition(obs, action, reward, next_obs, done)
-            agent.learn()
+            if t % 1 == 0 and "rgb" in render_mode:
+                # ==================================
+                # Render the environment
+                # ==================================
 
-            # if t % 1 == 0 and "rgb" in render_mode:
-            #     # ==================================
-            #     # Render the environment
-            #     # ==================================
-            #
-            #     image = env.render()
-            #     plt.clf()
-            #     plt.title("Pose")
-            #     plt.imshow(image)
-            #     plt.pause(0.01)
-            #     plt.ioff()
+                image = env.render()
+                plt.clf()
+                plt.title("Pose")
+                plt.imshow(image)
+                plt.pause(0.01)
+                plt.ioff()
+
+            if done:
+                episode_len = t + 1
+                break
 
             t += 1
             obs = next_obs
-            if done or truncated:
-                break
 
         env.close()
+
+        # Training agent
+        last_value = agent.get_last_value(next_obs)
+        mb_returns = agent.compute_discounted_return(agent.mb_rewards[:episode_len], last_value)
+        mb_obs = agent.mb_obs[:episode_len]
+        mb_actions = agent.mb_actions[:episode_len]
+        mb_values = agent.mb_values[:episode_len]
+        mb_a_logps = agent.mb_a_logps[:episode_len]
+
+        mb_advs = mb_returns - mb_values
+        mb_advs = (mb_advs - mb_advs.mean()) / (mb_advs.std() + 1e-6)
+
+        agent.learn(mb_obs, mb_actions, mb_values, mb_advs, mb_returns, mb_a_logps)
 
         if total_reward > best_reward:
             best_reward = total_reward

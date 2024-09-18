@@ -65,7 +65,8 @@ class DQNAgent:
         self.loss_fn = nn.MSELoss()
 
         # Load weight
-        self.load_model()
+        if not self.is_training:
+            self.load_model()
 
     @staticmethod
     def generate_action_map() -> list[dict[str, float]]:
@@ -76,8 +77,8 @@ class DQNAgent:
         Return:
             action_map (list[dict[str, float]]): list of action map
         """
-        motor = np.linspace(-1.0, 1.0, 11)
-        steering = np.linspace(-1.0, 1.0, 11)
+        motor = np.linspace(-1.0, 1.0, 10)
+        steering = np.linspace(-1.0, 1.0, 10)
 
         action_map = []
         for m in motor:
@@ -100,7 +101,7 @@ class DQNAgent:
         """
 
         # TODO: Select action
-        state = obs['lidar']  # (1080,)
+        state = obs['lidar'].copy()  # (1080,)
         state = torch.tensor(state).float().unsqueeze(0).to(self.device)
 
         # Normalize state
@@ -129,8 +130,13 @@ class DQNAgent:
             next_obs (dict): next state
             done (bool): done
         """
-        obs = obs['lidar']
-        next_obs = next_obs['lidar']
+        obs = obs['lidar'].copy()
+        next_obs = next_obs['lidar'].copy()
+
+        # Normalize state
+        obs = (obs - obs.mean()) / (obs.std() + 1e-8)
+        next_obs = (next_obs - next_obs.mean()) / (next_obs.std() + 1e-8)
+
         action_idx = self.action_map.index(action)
 
         self.memory.store_transition(obs, action_idx, reward, next_obs, done)
@@ -157,7 +163,7 @@ class DQNAgent:
         q_eval = self.qnet_eval(batch_obs)  # (B, action_dim)
         q_eval = q_eval.gather(1, batch_action)  # (B, 1)
 
-        q_next = self.qnet_target(batch_next_obs)  # (B, action_dim)
+        q_next = self.qnet_target(batch_next_obs).detach()  # (B, action_dim)
         max_q_next = q_next.max(1)[0].view(-1, 1)  # (B, 1)
 
         q_target = batch_reward + self.gamma * (1 - batch_done) * max_q_next  # (B, 1)
@@ -172,14 +178,16 @@ class DQNAgent:
         self.learn_step_counter += 1
 
         # Update target and epsilon
-        self.update_target_and_epsilon()
+        self.update_target_network()
 
-    def update_target_and_epsilon(self):
+        # Update epsilon
+        self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
+
+    def update_target_network(self):
         """Update target network's weights and epsilon"""
         if self.learn_step_counter % self.target_update != 0:
             return
 
-        self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
         self.qnet_target.load_state_dict(self.qnet_eval.state_dict())
 
     def load_model(self):
