@@ -75,6 +75,8 @@ class PPOAgent:
         returns = np.zeros_like(rewards)
         n_step = len(rewards)
 
+        # TODO: G_{n-1} = r_{n-1} + gamma * last_value
+        # TODO: G_t = r_t + gamma * G_{t+1}
         for t in reversed(range(n_step)):
             if t == n_step - 1:
                 returns[t] = rewards[t] + self.gamma * last_value
@@ -102,6 +104,8 @@ class PPOAgent:
         n_step = len(rewards)
         last_gae_lam = 0.0
 
+        # TODO: delta_t = r_t + gamma * (V(s_{t+1}) - V(s_t))
+        # TODO: adv_t = delta_t + gamma * lamb * adv_{t+1}
         for t in reversed(range(n_step)):
             if t == n_step - 1:
                 next_value = last_value
