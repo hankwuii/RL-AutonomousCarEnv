@@ -27,7 +27,7 @@ def main():
 
     EPOCHS = 1000
     best_reward = -np.inf
-    agent = get_training_agent()
+    agent = get_training_agent(agent_name='DQN')
 
     # ======================================================================
     # Run the environment
@@ -44,16 +44,17 @@ def main():
             # Execute RL model to obtain action
             # ==================================
             action = agent.get_action(obs)
+
             next_obs, _, done, truncated, states = env.step(action)
 
             # Calculate reward
             reward = 0
-            reward += 1.5 * np.linalg.norm(states['velocity'][:3])
+            reward += np.linalg.norm(states['velocity'][:3])
             reward += states['progress'] - old_progress
             old_progress = states['progress']
 
             if states['wall_collision']:
-                reward += -2
+                reward = -10
                 done = True
 
             total_reward += reward

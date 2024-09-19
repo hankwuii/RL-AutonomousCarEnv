@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.optim.adam import Adam
+from torch.optim.rmsprop import RMSprop
 
 from .dqn_network import DQNNetwork
 from .replay_buffer import ReplayBuffer
@@ -61,8 +61,9 @@ class DQNAgent:
         self.qnet_eval = DQNNetwork(state_dim, self.action_dim).to(self.device)
         self.qnet_target = DQNNetwork(state_dim, self.action_dim).to(self.device)
         self.qnet_target.eval()
-        self.optimizer = Adam(self.qnet_eval.parameters(), lr=self.lr)
-        self.loss_fn = nn.MSELoss()
+        self.optimizer = RMSprop(self.qnet_eval.parameters(), lr=self.lr)
+        self.loss_fn = nn.SmoothL1Loss()
+        self.update_target_network()
 
         # Load weight
         if not self.is_training:
@@ -77,7 +78,7 @@ class DQNAgent:
         Return:
             action_map (list[dict[str, float]]): list of action map
         """
-        motor = np.linspace(-1.0, 1.0, 10)
+        motor = np.linspace(-1, 1.0, 10)
         steering = np.linspace(-1.0, 1.0, 10)
 
         action_map = []
@@ -99,19 +100,16 @@ class DQNAgent:
             `{'motor': float,"steering": float}`
 
         """
-
         # TODO: Select action
-        state = obs['lidar'].copy()  # (1080,)
-        state = torch.tensor(state).float().unsqueeze(0).to(self.device)
+        _obs = np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
+        _obs = torch.tensor(_obs).float().unsqueeze(0).to(self.device)
 
-        # Normalize state
-        state = (state - state.mean()) / (state.std() + 1e-8)
-
-        # If training, use epsilon-greedy
-        if self.is_training and np.random.random() < self.epsilon:
-            action_idx = np.random.randint(0, self.action_dim)
-        else:
-            action_idx = self.qnet_eval(state).argmax().item()
+        with torch.no_grad():
+            # If training, use epsilon-greedy
+            if self.is_training and np.random.random() < self.epsilon:
+                action_idx = np.random.randint(0, self.action_dim)
+            else:
+                action_idx = self.qnet_eval(_obs).argmax().item()
 
         return self.action_map[action_idx]
 
@@ -130,18 +128,13 @@ class DQNAgent:
             next_obs (dict): next state
             done (bool): done
         """
-        obs = obs['lidar'].copy()
-        next_obs = next_obs['lidar'].copy()
-
-        # Normalize state
-        obs = (obs - obs.mean()) / (obs.std() + 1e-8)
-        next_obs = (next_obs - next_obs.mean()) / (next_obs.std() + 1e-8)
+        _obs = np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
+        _next_obs = np.concatenate([next_obs['pose'], next_obs['velocity'], next_obs['acceleration'], next_obs['lidar']], axis=-1)
 
         action_idx = self.action_map.index(action)
+        self.memory.store_transition(_obs, action_idx, reward, _next_obs, done)
 
-        self.memory.store_transition(obs, action_idx, reward, next_obs, done)
-
-    def learn(self):
+    def learn(self) -> None:
         """
         Learn from experiences
         """
@@ -177,20 +170,18 @@ class DQNAgent:
 
         self.learn_step_counter += 1
 
-        # Update target and epsilon
+        # Update target network and epsilon
         self.update_target_network()
-
-        # Update epsilon
         self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
 
-    def update_target_network(self):
+    def update_target_network(self) -> None:
         """Update target network's weights and epsilon"""
         if self.learn_step_counter % self.target_update != 0:
             return
 
         self.qnet_target.load_state_dict(self.qnet_eval.state_dict())
 
-    def load_model(self):
+    def load_model(self) -> None:
         """Load model"""
         if os.path.exists(self.model_path) is False:
             print(f"Model path {self.model_path} does not exist")
@@ -200,6 +191,6 @@ class DQNAgent:
         self.qnet_eval.load_state_dict(torch.load(self.model_path))
         self.qnet_target.load_state_dict(torch.load(self.model_path))
 
-    def save_model(self):
+    def save_model(self) -> None:
         """Save model"""
         torch.save(self.qnet_eval.state_dict(), self.model_path)

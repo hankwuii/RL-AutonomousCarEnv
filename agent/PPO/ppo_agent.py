@@ -11,7 +11,7 @@ from .value_network import ValueNet
 
 class PPOAgent:
     def __init__(self,
-                 state_dim: int,
+                 obs_dim: int,
                  action_dim: int,
                  max_step: int,
                  gamma: float = 0.99,
@@ -27,7 +27,7 @@ class PPOAgent:
                  device: str = "cuda:0"
                  ) -> None:
         # Initialize hyperparameters
-        self.state_dim = state_dim
+        self.obs_dim = obs_dim
         self.action_dim = action_dim
         self.max_step = max_step
         self.gamma = gamma
@@ -41,23 +41,37 @@ class PPOAgent:
         self.is_training = is_training
         self.model_path = model_path
         self.device = device
+        self.memory_counter = 0
 
         # Build networks
-        self.policy_net = PolicyNet(self.state_dim, self.action_dim).to(self.device)
-        self.value_net = ValueNet(self.state_dim).to(self.device)
+        self.policy_net = PolicyNet(self.obs_dim, self.action_dim).to(self.device)
+        self.value_net = ValueNet(self.obs_dim).to(self.device)
         self.opt_policy = torch.optim.Adam(self.policy_net.parameters(), lr)
         self.opt_value = torch.optim.Adam(self.value_net.parameters(), lr)
 
         # Storage trajectory
-        self.mb_obs = np.zeros((self.max_step, self.state_dim), dtype=np.float32)
+        self.mb_obs = np.zeros((self.max_step, self.obs_dim), dtype=np.float32)
         self.mb_actions = np.zeros((self.max_step, self.action_dim), dtype=np.float32)
         self.mb_values = np.zeros((self.max_step,), dtype=np.float32)
         self.mb_rewards = np.zeros((self.max_step,), dtype=np.float32)
         self.mb_a_logps = np.zeros((self.max_step,), dtype=np.float32)
 
-        self.load_model()
+        if not self.is_training:
+            self.load_model()
 
-    def compute_discounted_return(self, rewards, last_value):
+    def compute_discounted_return(self,
+                                  rewards: np.ndarray,
+                                  last_value: np.ndarray) -> np.ndarray:
+        """
+            Compute discounted return
+
+            Args:
+                rewards (np.ndarray) : 1D numpy array representing the sequence of rewards at each timestep.
+                last_value (np.ndarray): The estimated value of the final state.
+
+            Returns:
+                returns (np.ndarray): 1D numpy array representing the discounted return for each timestep.
+        """
         returns = np.zeros_like(rewards)
         n_step = len(rewards)
 
@@ -69,7 +83,21 @@ class PPOAgent:
 
         return returns
 
-    def compute_gae(self, rewards, values, last_value):
+    def compute_gae(self,
+                    rewards: np.ndarray,
+                    values: np.ndarray,
+                    last_value: np.ndarray) -> np.ndarray:
+        """
+        Compute the Generalized Advantage Estimation (GAE) for a trajectory.
+        Args:
+            rewards (np.ndarray): A 1D numpy array of rewards for each timestep.
+            values (np.ndarray): A 1D numpy array of value estimates for each timestep.
+            last_value (np.ndarray): The value estimate for the final state.
+
+        Returns:
+            np.ndarray: The advantage estimates plus the value function (returns) for each timestep.
+        """
+
         advs = np.zeros_like(rewards)
         n_step = len(rewards)
         last_gae_lam = 0.0
@@ -85,7 +113,7 @@ class PPOAgent:
 
         return advs + values
 
-    def get_action(self, obs: dict):
+    def get_action(self, obs: dict) -> tuple | dict[str:float, str:float]:
         """
             Get action based on observation
 
@@ -97,42 +125,57 @@ class PPOAgent:
                 `{'motor': float,"steering": float}`
         """
         # TODO: Select action
-        state = obs['lidar'].copy()  # (1080,)
-        state = torch.tensor(state).float().unsqueeze(0).to(self.device)
+        _obs = np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
+        _obs = torch.tensor(_obs, dtype=torch.float32).unsqueeze(0).to(self.device)
 
-        # Normalize state
-        state = (state - state.mean()) / (state.std() + 1e-8)
+        with torch.no_grad():
+            if self.is_training:
+                action, a_logp = self.policy_net(_obs)
+                value = self.value_net(_obs)
 
-        if self.is_training:
-            action, a_logp = self.policy_net(state)
-            value = self.value_net(state)
+                action = action.cpu().detach().numpy()[0]
+                a_logp = a_logp.cpu().detach().numpy()
+                value = value.cpu().detach().numpy()
 
-            action = action.cpu().numpy()
-            a_logp = a_logp.cpu().numpy()
-            value = value.cpu().numpy()
+                return action, a_logp, value
+            else:
+                action, a_logp = self.policy_net(_obs)
+                action = action.cpu().detach().numpy()[0]
 
-            return action, a_logp, value
-        else:
-            pass
+                return {"motor": np.clip(action[0], -1, 1),
+                        'steering': np.clip(action[1], -1, 1)}
 
-    def get_last_value(self, obs: dict):
-        state = obs['lidar'].copy()  # (1080,)
-        state = torch.tensor(state).float().unsqueeze(0).to(self.device)
 
-        # Normalize state
-        state = (state - state.mean()) / (state.std() + 1e-8)
+    def learn(self) -> None:
+        with torch.no_grad():
+            # Compute last value
+            last_obs = self.mb_obs[self.memory_counter]
+            last_obs = torch.tensor(last_obs, dtype=torch.float32).unsqueeze(0).to(self.device)
+            last_value = self.value_net(last_obs).cpu().detach().numpy()[0]
 
-        return self.value_net(state).cpu().numpy()
+            # Compute returns
+            mb_returns = self.compute_discounted_return(self.mb_rewards[:self.memory_counter - 1], last_value)
 
-    def learn(self,
-              mb_states, mb_actions, mb_old_values, mb_advs, mb_returns, mb_old_a_logps):
-        mb_states = torch.from_numpy(mb_states).to(self.device)
+            # Sample from memory
+            mb_obs = self.mb_obs[:self.memory_counter - 1]
+            mb_actions = self.mb_actions[:self.memory_counter - 1]
+            mb_a_logps = self.mb_a_logps[:self.memory_counter - 1]
+            mb_values = self.mb_values[:self.memory_counter - 1]
+
+            # Compute advantages
+            mb_advs = mb_returns - mb_values
+            mb_advs = (mb_advs - mb_advs.mean()) / (mb_advs.std() + 1e-6)
+
+        # To tensor
+        mb_obs = torch.from_numpy(mb_obs).to(self.device)
         mb_actions = torch.from_numpy(mb_actions).to(self.device)
-        mb_old_values = torch.from_numpy(mb_old_values).to(self.device)
+        mb_old_values = torch.from_numpy(mb_a_logps).to(self.device)
         mb_advs = torch.from_numpy(mb_advs).to(self.device)
         mb_returns = torch.from_numpy(mb_returns).to(self.device)
-        mb_old_a_logps = torch.from_numpy(mb_old_a_logps).to(self.device)
-        episode_length = len(mb_states)
+        mb_old_a_logps = torch.from_numpy(mb_a_logps).to(self.device)
+
+        # Compute minibatch size
+        episode_length = len(mb_obs)
         rand_idx = np.arange(episode_length)
         sample_n_mb = episode_length // self.sample_mb_size
 
@@ -142,21 +185,23 @@ class PPOAgent:
         else:
             sample_mb_size = self.sample_mb_size
 
+        # Training
         for i in range(self.sample_n_epoch):
             np.random.shuffle(rand_idx)
 
             for j in range(sample_n_mb):
                 # Randomly sample a batch for training
                 sample_idx = rand_idx[j * sample_mb_size: (j + 1) * sample_mb_size]
-                sample_states = mb_states[sample_idx]
+                sample_obs = mb_obs[sample_idx]
                 sample_actions = mb_actions[sample_idx]
                 sample_old_values = mb_old_values[sample_idx]
                 sample_advs = mb_advs[sample_idx]
                 sample_returns = mb_returns[sample_idx]
                 sample_old_a_logps = mb_old_a_logps[sample_idx]
 
-                sample_a_logps, sample_ents = self.policy_net.evaluate(sample_states, sample_actions)
-                sample_values = self.value_net(sample_states)
+                # TODO: PPO algorithm
+                sample_a_logps, sample_ents = self.policy_net.evaluate(sample_obs, sample_actions)
+                sample_values = self.value_net(sample_obs)
                 ent = sample_ents.mean()
 
                 # Compute value loss
@@ -184,29 +229,41 @@ class PPOAgent:
                 nn.utils.clip_grad_norm_(self.value_net.parameters(), self.max_grad_norm)
                 self.opt_value.step()
 
+        self.memory_counter = 0
+
     def store_trajectory(self,
                          obs: dict,
-                         action: dict[str, float],
-                         value,
-                         reward: float | int,
-                         a_logp,
-                         step: int) -> None:
+                         action: np.ndarray,
+                         value: np.ndarray,
+                         a_logp: np.ndarray,
+                         reward: float) -> None:
+        """
+            Store the trajectory (experience) during interaction with the environment.
 
-        obs = obs['lidar'].copy()
+            Args:
+                obs (dict): Observation from the environment, which includes pose, velocity, acceleration, and lidar data.
+                action (np.ndarray): The action taken by the agent at the current timestep.
+                value (np.ndarray): The estimated value of the current state (from the value network).
+                a_logp (np.ndarray): The log-probability of the action taken (from the policy network).
+                reward (float): The reward received from the environment after taking the action.
+        """
 
-        # Normalize state
-        state = (obs - obs.mean()) / (obs.std() + 1e-8)
+        obs = np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
 
-        self.mb_obs[step] = state
-        self.mb_actions[step] = action
-        self.mb_values[step] = value
-        self.mb_rewards[step] = reward
-        self.mb_a_logps[step] = a_logp
+        self.mb_obs[self.memory_counter] = obs
+        self.mb_actions[self.memory_counter] = action
+        self.mb_values[self.memory_counter] = value
+        self.mb_rewards[self.memory_counter] = reward
+        self.mb_a_logps[self.memory_counter] = a_logp
 
-    def save_model(self):
+        self.memory_counter += 1
+
+    def save_model(self) -> None:
+        """Save model"""
         torch.save(self.policy_net.state_dict(), self.model_path)
 
-    def load_model(self):
+    def load_model(self) -> None:
+        """Load model"""
         if os.path.exists(self.model_path) is False:
             print(f"Model path {self.model_path} does not exist")
             return

@@ -27,6 +27,7 @@ def main():
     )
 
     EPOCHS = 1000
+    MAX_STEP = 6000
     best_reward = -np.inf
     agent = get_training_agent(agent_name='PPO')
 
@@ -37,26 +38,32 @@ def main():
         obs, info = env.reset(options=dict(mode='grid'))
         t = 0
         total_reward = 0
-        episode_len = 0
+        old_progress = 0
         done = False
 
-        while not done:
+        while not done and t < MAX_STEP:
             # ==================================
             # Execute RL model to obtain action
             # ==================================
             action, a_logp, value = agent.get_action(obs)
 
-            next_obs, _, done, truncated, states = env.step(action)
+            next_obs, _, done, truncated, states = env.step(
+                {'motor': np.clip(action[0], -1, 1),
+                 'steering': np.clip(action[1], -1, 1)}
+            )
 
             # Calculate reward
             reward = 0
             reward += np.linalg.norm(states['velocity'][:3])
+            reward += states['progress'] - old_progress
+            old_progress = states['progress']
 
             if states['wall_collision']:
-                reward += -5
+                reward = -10
+                done = True
 
             total_reward += reward
-            agent.store_trajectory(obs, action, value, a_logp, reward, t)
+            agent.store_trajectory(obs, action, value, a_logp, reward)
 
             if t % 1 == 0 and "rgb" in render_mode:
                 # ==================================
@@ -70,27 +77,15 @@ def main():
                 plt.pause(0.01)
                 plt.ioff()
 
-            if done:
-                episode_len = t + 1
-                break
-
             t += 1
             obs = next_obs
 
+            if done:
+                agent.store_trajectory(obs, action, value, a_logp, reward)
+                break
+
         env.close()
-
-        # Training agent
-        last_value = agent.get_last_value(next_obs)
-        mb_returns = agent.compute_discounted_return(agent.mb_rewards[:episode_len], last_value)
-        mb_obs = agent.mb_obs[:episode_len]
-        mb_actions = agent.mb_actions[:episode_len]
-        mb_values = agent.mb_values[:episode_len]
-        mb_a_logps = agent.mb_a_logps[:episode_len]
-
-        mb_advs = mb_returns - mb_values
-        mb_advs = (mb_advs - mb_advs.mean()) / (mb_advs.std() + 1e-6)
-
-        agent.learn(mb_obs, mb_actions, mb_values, mb_advs, mb_returns, mb_a_logps)
+        agent.learn()
 
         if total_reward > best_reward:
             best_reward = total_reward
