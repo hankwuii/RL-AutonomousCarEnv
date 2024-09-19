@@ -46,8 +46,8 @@ class PPOAgent:
         # Build networks
         self.policy_net = PolicyNet(self.obs_dim, self.action_dim).to(self.device)
         self.value_net = ValueNet(self.obs_dim).to(self.device)
-        self.opt_policy = torch.optim.Adam(self.policy_net.parameters(), lr)
-        self.opt_value = torch.optim.Adam(self.value_net.parameters(), lr)
+        self.opt_policy = Adam(self.policy_net.parameters(), lr)
+        self.opt_value = Adam(self.value_net.parameters(), lr)
 
         # Storage trajectory
         self.mb_obs = np.zeros((self.max_step, self.obs_dim), dtype=np.float32)
@@ -113,6 +113,24 @@ class PPOAgent:
 
         return advs + values
 
+    @staticmethod
+    def obs_preprocess(obs: dict) -> np.ndarray:
+        """
+        Get action based on observation
+
+        Args:
+            obs: dict
+                `{'rgb_image': ndarray(128, 128, 3), 'lidar': ndarray(1080,), 'pose': ndarray(6,), 'velocity': ndarray(6,), 'acceleration': ndarray(6,), time: ndarray(1,}`
+
+        Returns: np.ndarray
+            agent observation input
+
+        """
+
+        # TODO Make your own observation preprocessing
+
+        return np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
+
     def get_action(self, obs: dict) -> tuple | dict[str:float, str:float]:
         """
             Get action based on observation
@@ -125,7 +143,7 @@ class PPOAgent:
                 `{'motor': float,"steering": float}`
         """
         # TODO: Select action
-        _obs = np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
+        _obs = self.obs_preprocess(obs)
         _obs = torch.tensor(_obs, dtype=torch.float32).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
@@ -248,9 +266,9 @@ class PPOAgent:
                 reward (float): The reward received from the environment after taking the action.
         """
 
-        obs = np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
+        _obs = self.obs_preprocess(obs)
 
-        self.mb_obs[self.memory_counter] = obs
+        self.mb_obs[self.memory_counter] = _obs
         self.mb_actions[self.memory_counter] = action
         self.mb_values[self.memory_counter] = value
         self.mb_rewards[self.memory_counter] = reward

@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.optim.rmsprop import RMSprop
+from torch.optim.adam import Adam
 
 from .dqn_network import DQNNetwork
 from .replay_buffer import ReplayBuffer
@@ -61,7 +61,7 @@ class DQNAgent:
         self.qnet_eval = DQNNetwork(state_dim, self.action_dim).to(self.device)
         self.qnet_target = DQNNetwork(state_dim, self.action_dim).to(self.device)
         self.qnet_target.eval()
-        self.optimizer = RMSprop(self.qnet_eval.parameters(), lr=self.lr)
+        self.optimizer = Adam(self.qnet_eval.parameters(), lr=self.lr)
         self.loss_fn = nn.SmoothL1Loss()
         self.update_target_network()
 
@@ -88,6 +88,24 @@ class DQNAgent:
 
         return action_map
 
+    @staticmethod
+    def obs_preprocess(obs: dict) -> np.ndarray:
+        """
+        Get action based on observation
+
+        Args:
+            obs: dict
+                `{'rgb_image': ndarray(128, 128, 3), 'lidar': ndarray(1080,), 'pose': ndarray(6,), 'velocity': ndarray(6,), 'acceleration': ndarray(6,), time: ndarray(1,}`
+
+        Returns: np.ndarray
+            agent observation input
+
+        """
+
+        # TODO Make your own observation preprocessing
+
+        return np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
+
     def get_action(self, obs: dict) -> dict[str, float]:
         """
         Get action based on observation
@@ -101,7 +119,7 @@ class DQNAgent:
 
         """
         # TODO: Select action
-        _obs = np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
+        _obs = self.obs_preprocess(obs)
         _obs = torch.tensor(_obs).float().unsqueeze(0).to(self.device)
 
         with torch.no_grad():
@@ -128,10 +146,10 @@ class DQNAgent:
             next_obs (dict): next state
             done (bool): done
         """
-        _obs = np.concatenate([obs['pose'], obs['velocity'], obs['acceleration'], obs['lidar']], axis=-1)
-        _next_obs = np.concatenate([next_obs['pose'], next_obs['velocity'], next_obs['acceleration'], next_obs['lidar']], axis=-1)
-
+        _obs = self.obs_preprocess(obs)
+        _next_obs = self.obs_preprocess(next_obs)
         action_idx = self.action_map.index(action)
+
         self.memory.store_transition(_obs, action_idx, reward, _next_obs, done)
 
     def learn(self) -> None:
