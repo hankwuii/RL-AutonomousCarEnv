@@ -86,6 +86,24 @@ class DQNAgent:
 
         return action_map
 
+    @staticmethod
+    def obs_preprocess(obs: dict) -> np.ndarray:
+        """
+        Get action based on observation
+
+        Args:
+            obs: dict
+                `{'rgb_image': ndarray(128, 128, 3), 'lidar': ndarray(1080,), 'pose': ndarray(6,), 'velocity': ndarray(6,), 'acceleration': ndarray(6,), time: ndarray(1,}`
+
+        Returns: np.ndarray
+            agent observation input
+
+        """
+
+        # TODO Make your own observation preprocessing
+
+        return np.concatenate([obs['lidar'][::40], obs['velocity'], obs['acceleration']], axis=0)
+
     def get_action(self, obs: dict) -> dict[str, float]:
         """
         Get action based on observation
@@ -100,7 +118,7 @@ class DQNAgent:
         """
 
         # TODO: Select action
-        state = obs['lidar']  # (1080,)
+        state = DQNAgent.obs_preprocess(obs)
         state = torch.tensor(state).float().unsqueeze(0).to(self.device)
 
         # Normalize state
@@ -129,8 +147,8 @@ class DQNAgent:
             next_obs (dict): next state
             done (bool): done
         """
-        obs = obs['lidar']
-        next_obs = next_obs['lidar']
+        obs = DQNAgent.obs_preprocess(obs)
+        next_obs = DQNAgent.obs_preprocess(next_obs)
         action_idx = self.action_map.index(action)
 
         self.memory.store_transition(obs, action_idx, reward, next_obs, done)
