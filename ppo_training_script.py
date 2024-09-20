@@ -41,7 +41,7 @@ def main():
         old_progress = 0
         done = False
 
-        while not done and t < MAX_STEP:
+        while not done and t < MAX_STEP - 1:
             # ==================================
             # Execute RL model to obtain action
             # ==================================
