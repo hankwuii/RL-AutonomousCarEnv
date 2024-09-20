@@ -95,7 +95,6 @@
 ## Project structure
 ![img.png](docs/ProjectStructure01.png)
 ![img_1.png](docs/ProjectStructure02.png)
-
 ---
 
 ## Environments
