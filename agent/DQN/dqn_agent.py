@@ -119,17 +119,7 @@ class DQNAgent:
 
         """
         # TODO: Select action
-        _obs = self.obs_preprocess(obs)
-        _obs = torch.tensor(_obs).float().unsqueeze(0).to(self.device)
-
-        with torch.no_grad():
-            # If training, use epsilon-greedy
-            if self.is_training and np.random.random() < self.epsilon:
-                action_idx = np.random.randint(0, self.action_dim)
-            else:
-                action_idx = self.qnet_eval(_obs).argmax().item()
-
-        return self.action_map[action_idx]
+        pass
 
     def store_transition(self,
                          obs: dict,
@@ -170,17 +160,7 @@ class DQNAgent:
         batch_next_obs = torch.tensor(batch_next_obs, dtype=torch.float32).to(self.device)
 
         # TODO: DQN Algorithm, formula: Q(s, a) = r + gamma * max_a' Q(s', a')
-        # Q-learning algorithm
-        q_eval = self.qnet_eval(batch_obs)  # (B, action_dim)
-        q_eval = q_eval.gather(1, batch_action)  # (B, 1)
 
-        q_next = self.qnet_target(batch_next_obs).detach()  # (B, action_dim)
-        max_q_next = q_next.max(1)[0].view(-1, 1)  # (B, 1)
-
-        q_target = batch_reward + self.gamma * (1 - batch_done) * max_q_next  # (B, 1)
-
-        # Update eval network
-        loss = self.loss_fn(q_eval, q_target)
 
         self.optimizer.zero_grad()
         loss.backward()

@@ -77,13 +77,7 @@ class PPOAgent:
 
         # TODO: G_{n-1} = r_{n-1} + gamma * last_value
         # TODO: G_t = r_t + gamma * G_{t+1}
-        for t in reversed(range(n_step)):
-            if t == n_step - 1:
-                returns[t] = rewards[t] + self.gamma * last_value
-            else:
-                returns[t] = rewards[t] + self.gamma * returns[t + 1]
-
-        return returns
+        pass
 
     def compute_gae(self,
                     rewards: np.ndarray,
@@ -106,16 +100,7 @@ class PPOAgent:
 
         # TODO: delta_t = r_t + gamma * (V(s_{t+1}) - V(s_t))
         # TODO: adv_t = delta_t + gamma * lamb * adv_{t+1}
-        for t in reversed(range(n_step)):
-            if t == n_step - 1:
-                next_value = last_value
-            else:
-                next_value = values[t + 1]
-
-            delta = rewards[t] + self.gamma * next_value - values[t]
-            advs[t] = last_gae_lam = delta + self.gamma * self.lamb * last_gae_lam
-
-        return advs + values
+        pass
 
     @staticmethod
     def obs_preprocess(obs: dict) -> np.ndarray:
@@ -222,22 +207,7 @@ class PPOAgent:
                 sample_old_a_logps = mb_old_a_logps[sample_idx]
 
                 # TODO: PPO algorithm
-                sample_a_logps, sample_ents = self.policy_net.evaluate(sample_obs, sample_actions)
-                sample_values = self.value_net(sample_obs)
-                ent = sample_ents.mean()
 
-                # Compute value loss
-                v_pred_clip = sample_old_values + torch.clamp(sample_values - sample_old_values, -self.clip_val,
-                                                              self.clip_val)
-                v_loss1 = (sample_returns - sample_values) ** 2
-                v_loss2 = (sample_returns - v_pred_clip) ** 2
-                v_loss = torch.max(v_loss1, v_loss2).mean()
-
-                # Compute value loss
-                ratio = (sample_a_logps - sample_old_a_logps).exp()
-                pg_loss1 = ratio * -sample_advs
-                pg_loss2 = torch.clamp(ratio, 1.0 - self.clip_val, 1.0 + self.clip_val) * -sample_advs
-                pg_loss = torch.max(pg_loss1, pg_loss2).mean() - self.ent_weight * ent
 
                 # Train actor
                 self.opt_policy.zero_grad()
