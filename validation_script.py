@@ -1,6 +1,7 @@
 from time import sleep
 import sys
 import os
+import sys
 
 import cv2
 import gymnasium
@@ -8,12 +9,16 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import racecar_gym.envs.gym_api  # Necessary!!!Cannot be deleted!!!
-from agent.Agent import get_valid_agent
+
+# add private agent path
 
 
 if 'racecar_gym.envs.gym_api' not in sys.modules:
     raise RuntimeError('Please run: pip install -e . and import racecar_gym.envs.gym_api first!')
 def main():
+    sys.path.append(AGENT_ROOT_DIR)
+    from agent.Agent import get_valid_agent
+
     # ======================================================================
     # Create the environment
     # ======================================================================
@@ -29,12 +34,14 @@ def main():
     done = False
     agent = get_valid_agent("PPO")
     # video_path = fr"Z:\Student_Work\_Share\RL競賽影片\{_map}\{student_id}.mp4"
-    video_path = fr"{save_root}/{_map}/{student_id}.mp4"
+    video_path = fr"{save_root}/{_map}/{student_id}_{name}.mp4"
     os.makedirs(os.path.dirname(video_path), exist_ok=True)
     output_video_writer = cv2.VideoWriter(filename=video_path,
                                           fourcc=cv2.VideoWriter_fourcc('m', 'p', '4', 'v'),
                                           fps=20,
                                           frameSize=(640, 480))
+
+    print(f"student_id: {student_id}, name: {name}")
     print("save at", video_path)
     # ======================================================================
     # Run the environment
@@ -62,10 +69,10 @@ def main():
             output_video_writer.write(image)
 
             # 顯示影像
-            # cv2.imshow(f"{student_id}", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-            # cv2.waitKey(1)
-        # if t > 200:
-        #     break
+            cv2.imshow(f"{student_id}", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            cv2.waitKey(1)
+        if t > 100:
+            break
 
         t += 1
         if done or truncated:
@@ -75,12 +82,19 @@ def main():
 
     env.close()
     output_video_writer.release()
+    print(f"student_id: {student_id}, name: {name}")
     print("finish", video_path)
 
 
 if __name__ == '__main__':
+    import re
+    AGENT_ROOT_DIR = f"Z:\Student_Work\_Share\RL鴻耀\M11352012@ 鄭語萱_931492_assignsubmission_file\M11352012\M11352012"
     save_root = f"videos"
-    # _map = "validation1"
-    _map = "validation2"
-    student_id = "M11252014"
+    _map = "validation1"
+    # _map = "validation2"
+
+    # --- dont change ---
+    student_id = AGENT_ROOT_DIR.split("\\")[-1]
+    name = re.search(r"@ (.*?)_", AGENT_ROOT_DIR).group(1)
+
     main()
