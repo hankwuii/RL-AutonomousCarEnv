@@ -1,5 +1,5 @@
 world:
-  name: validation  # name of the map
+  name: validation1  # name of the map
 agents:
   - id: A
     vehicle:
