@@ -29,7 +29,7 @@ def main():
     done = False
     agent = get_valid_agent("PPO")
     # video_path = fr"Z:\Student_Work\_Share\RL競賽影片\{_map}\{student_id}.mp4"
-    video_path = fr"videos/{_map}/{student_id}.mp4"
+    video_path = fr"{save_root}/{_map}/{student_id}.mp4"
     os.makedirs(os.path.dirname(video_path), exist_ok=True)
     output_video_writer = cv2.VideoWriter(filename=video_path,
                                           fourcc=cv2.VideoWriter_fourcc('m', 'p', '4', 'v'),
@@ -62,10 +62,10 @@ def main():
             output_video_writer.write(image)
 
             # 顯示影像
-            cv2.imshow(f"{student_id}", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-            cv2.waitKey(1)
-        if t > 200:
-            break
+            # cv2.imshow(f"{student_id}", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            # cv2.waitKey(1)
+        # if t > 200:
+        #     break
 
         t += 1
         if done or truncated:
@@ -79,6 +79,7 @@ def main():
 
 
 if __name__ == '__main__':
+    save_root = f"videos"
     # _map = "validation1"
     _map = "validation2"
     student_id = "M11252014"
