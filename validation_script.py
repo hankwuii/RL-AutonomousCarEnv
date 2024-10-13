@@ -21,7 +21,8 @@ def main():
     env = gymnasium.make(
         'SingleAgentAustria-v0',
         render_mode=render_mode,
-        scenario='scenarios/circle_cw.yml',  # change the scenario here (change map)
+        # scenario='scenarios/circle_cw.yml',  # change the scenario here (change map)
+        scenario=f'scenarios/{_map}.yml',  # change the scenario here (change map)
         # scenario='scenarios/validation.yml',  # change the scenario here (change map), ONLY USE THIS FOR VALIDATION
         # scenario='scenarios/validation2.yml',   # Use this during the midterm competition, ONLY USE THIS FOR VALIDATION
     )
@@ -61,8 +62,8 @@ def main():
             output_video_writer.write(image)
 
             # 顯示影像
-            # cv2.imshow(f"{student_id}", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-            # cv2.waitKey(1)
+            cv2.imshow(f"{student_id}", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            cv2.waitKey(1)
         if t > 200:
             break
 
@@ -78,7 +79,7 @@ def main():
 
 
 if __name__ == '__main__':
-    _map = "validation1"
-    # _map = "validation2"
+    # _map = "validation1"
+    _map = "validation2"
     student_id = "M11252014"
     main()
