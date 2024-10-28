@@ -1,4 +1,6 @@
-# Racecar Gym
+# RL-AutonomousCarEnv
+
+![car](https://github.com/user-attachments/assets/862cd5bb-dd1d-4a66-853b-7a9d7984e246)
 
 * Competition PPT link : [https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing](https://docs.google.com/presentation/d/1J6RE2CaqmXGGYuwT6-_0erj9Yp3HIR30mk6lciRfBpY/edit?usp=sharing)
 * Here is the chinese version : [README_zh.md](README_zh.md)
