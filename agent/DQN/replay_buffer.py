@@ -1,3 +1,4 @@
+# 儲存遊玩經驗供訓練使用
 import numpy as np
 
 

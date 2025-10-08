@@ -27,7 +27,7 @@ def main():
         # scenario='scenarios/validation2.yml',   # Use this during the midterm competition, ONLY USE THIS FOR VALIDATION
     )
     done = False
-    agent = get_valid_agent("PPO")
+    agent = get_valid_agent("DQN")
     # video_path = fr"Z:\Student_Work\_Share\RL競賽影片\{_map}\{student_id}.mp4"
     video_path = fr"{save_root}/{_map}/{student_id}.mp4"
     os.makedirs(os.path.dirname(video_path), exist_ok=True)

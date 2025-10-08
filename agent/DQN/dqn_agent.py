@@ -24,6 +24,7 @@ class DQNAgent:
                  model_path: str = "./agent/weight.pth",
                  device: str = "cuda:0") -> None:
         """
+        可以微調的超參數
         state_dim (int): dimension of state
         lr (float): learning rate
         gamma (float): discount factor
@@ -80,6 +81,7 @@ class DQNAgent:
         Return:
             action_map (list[dict[str, float]]): list of action map
         """
+        # 連續動作拆成離散
         motor = np.linspace(-1, 1.0, 10)
         steering = np.linspace(-1.0, 1.0, 10)
 
@@ -161,7 +163,7 @@ class DQNAgent:
         batch_done = torch.tensor(batch_done, dtype=torch.float32).to(self.device)
         batch_next_obs = torch.tensor(batch_next_obs, dtype=torch.float32).to(self.device)
 
-        # TODO: DQN Algorithm, formula: Q(s, a) = r + gamma * max_a' Q(s', a')
+        # TODO: DQN Algorithm, formula: Q(s, a) = r + gamma * max_a' Q(s', a') (Bellman equation)
 
 
         self.optimizer.zero_grad()
